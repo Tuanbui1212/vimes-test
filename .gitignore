@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+service/node_modules/
+client/node_modules/
+
+# Next.js build
+client/.next/
+client/out/
+
+# TypeScript build
+service/dist/
+dist/
+
+# Environment variables
+service/.env
+client/.env
+.env
+.env.local
+.env.*.local
+
+# Logs & temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
