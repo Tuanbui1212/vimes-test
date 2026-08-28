@@ -23,6 +23,7 @@ export interface ReceiptVoucherPayload {
   deliverer_name?: string | null;
   debit_account?: string | null;
   credit_account?: string | null;
+  ref_document_type?: string | null;
   ref_document_no?: string | null;
   ref_document_date?: string | null;
   attached_docs?: string | null;

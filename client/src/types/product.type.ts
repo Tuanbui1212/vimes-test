@@ -7,4 +7,5 @@ export interface Product {
   quality?: string;
   category_type?: string;
   unit: string;
+  status?: string;
 }

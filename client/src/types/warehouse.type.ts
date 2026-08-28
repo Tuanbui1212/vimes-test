@@ -3,4 +3,5 @@ export interface Warehouse {
   code: string;
   name: string;
   location?: string;
+  status?: string;
 }

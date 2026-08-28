@@ -74,12 +74,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           path: APP_PATHS.SUPPLIERS.ROOT,
-          label: 'Nhà Cung Cấp',
+          label: 'Đơn Vị',
           icon: <Building2 className="w-5 h-5 shrink-0" />
         },
         {
           path: APP_PATHS.DEPARTMENTS.ROOT,
-          label: 'Đơn Vị / Phòng Ban',
+          label: 'Phòng Ban',
           icon: <Users className="w-5 h-5 shrink-0" />
         }
       ]

@@ -23,7 +23,7 @@
 - **Styling:** Tailwind CSS v4, Modern Glassmorphism & Custom VIMES Cyan/Teal Palette
 - **Icons:** Lucide React
 
-### Backend (`service/`)
+### Backend (`server/`)
 - **Runtime & Framework:** Node.js, [Express 5](https://expressjs.com/)
 - **Ngôn ngữ:** TypeScript 5 (Strict mode)
 - **Database:** PostgreSQL 16
@@ -79,18 +79,18 @@ Khi lập phiếu nhập kho, toàn bộ thông tin phiếu mẹ (`receipt_vouch
 
 ### Cách 1: Chạy bằng Docker Compose (Nhanh nhất & Khuyên dùng)
 
-Hệ thống đã được đóng gói sẵn toàn bộ Database và Backend Service trong thư mục `service/`.
+Hệ thống đã được đóng gói sẵn toàn bộ Database và Backend Service trong thư mục `server/`.
 
 #### Bước 1: Khởi động Backend & PostgreSQL bằng Docker
-Mở Terminal tại thư mục `service`:
+Mở Terminal tại thư mục `server`:
 ```powershell
-cd d:\tbui\test\service
+cd d:\tbui\test\server
 docker compose up --build -d
 ```
 > *Lệnh trên sẽ tự động dựng container PostgreSQL (cổng 5432), tự động nạp bảng & dữ liệu mẫu từ `migrations/01_init_tables.sql`, và khởi chạy Backend API tại cổng `8080`.*
 
 - Kiểm tra trạng thái: `docker compose ps`
-- Xem log backend: `docker compose logs -f service`
+- Xem log backend: `docker compose logs -f server`
 - Tắt hệ thống: `docker compose down`
 
 #### Bước 2: Chạy Frontend Client
@@ -111,11 +111,11 @@ npm run dev
 
 #### Bước 1: Khởi tạo Database PostgreSQL
 1. Tạo Database tên: `inventory_db`
-2. Chạy file script SQL: [`service/migrations/01_init_tables.sql`](service/migrations/01_init_tables.sql) (bằng pgAdmin, DBeaver hoặc lệnh `psql`).
+2. Chạy file script SQL: [`server/migrations/01_init_tables.sql`](server/migrations/01_init_tables.sql) (bằng pgAdmin, DBeaver hoặc lệnh `psql`).
 
 #### Bước 2: Khởi chạy Backend Service
 ```powershell
-cd d:\tbui\test\service
+cd d:\tbui\test\server
 npm install
 npm start
 ```
@@ -157,7 +157,7 @@ d:/tbui/test/
 ├── README.md                     # Tài liệu hướng dẫn dự án
 ├── .gitignore                    # Cấu hình bỏ qua file cho Git
 │
-├── service/                      # BACKEND SERVICE (Node.js/Express/PostgreSQL)
+├── server/                      # BACKEND SERVICE (Node.js/Express/PostgreSQL)
 │   ├── Dockerfile                # Dockerfile build Backend container
 │   ├── docker-compose.yml        # Compose chạy PostgreSQL & Backend
 │   ├── .dockerignore
