@@ -22,6 +22,7 @@ export interface ComboBoxProps {
   helperText?: string;
   required?: boolean;
   disabled?: boolean;
+  onClickDisabled?: () => void;
   allowClear?: boolean;
   className?: string;
 
@@ -48,6 +49,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   helperText,
   required,
   disabled = false,
+  onClickDisabled,
   allowClear = false,
   className = '',
   fetchOptions,
@@ -209,7 +211,13 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
       )}
 
       <div
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={() => {
+          if (disabled) {
+            onClickDisabled?.();
+          } else {
+            setIsOpen(!isOpen);
+          }
+        }}
         className={`w-full flex items-center justify-between text-sm bg-white rounded-lg border transition-all duration-150 py-2 px-3 cursor-pointer select-none ${
           disabled ? 'bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200' : ''
         } ${

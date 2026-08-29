@@ -10,10 +10,12 @@ export class DepartmentController {
     try {
       const status = req.query.status ? String(req.query.status) : undefined;
       const search = req.query.search ? String(req.query.search) : undefined;
+      const supplierIdQuery = req.query.supplier_id || req.query.supplierId;
+      const supplierId = supplierIdQuery ? parseInt(String(supplierIdQuery), 10) : undefined;
       const page = req.query.page ? parseInt(String(req.query.page), 10) : undefined;
       const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : undefined;
 
-      const result = await departmentService.getDepartments({ status, search, page, limit });
+      const result = await departmentService.getDepartments({ status, search, supplierId: isNaN(Number(supplierId)) ? undefined : supplierId, page, limit });
       res.status(200).json({
         success: true,
         data: result.items,

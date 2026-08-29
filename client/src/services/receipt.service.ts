@@ -10,8 +10,8 @@ export const receiptService = {
     return fetchApi<ApiResponse<ReceiptVoucher>>(`/receipts/${id}`);
   },
 
-  async create(payload: ReceiptVoucherPayload): Promise<ApiResponse<{ voucherId: number; totalAmount: number }>> {
-    return fetchApi<ApiResponse<{ voucherId: number; totalAmount: number }>>('/receipts', {
+  async create(payload: ReceiptVoucherPayload): Promise<ApiResponse<{ voucherId: number; voucherCode: string; totalAmount: number }>> {
+    return fetchApi<ApiResponse<{ voucherId: number; voucherCode: string; totalAmount: number }>>('/receipts', {
       method: 'POST',
       body: JSON.stringify(payload)
     });

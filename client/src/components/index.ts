@@ -4,7 +4,6 @@ export * from './ComboBox';
 export * from './Sidebar';
 export * from './MainLayout';
 export * from './Skeleton';
-export * from './Toast';
 export * from './Modal';
 export * from './ConfirmModal';
 export * from './QuickCreateModals';

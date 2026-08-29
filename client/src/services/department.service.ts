@@ -7,6 +7,8 @@ function buildQuery(params?: PaginationParams | string): string {
   const searchParams = new URLSearchParams();
   if (params.status) searchParams.append('status', params.status);
   if (params.search) searchParams.append('search', params.search);
+  const supId = params.supplier_id ?? params.supplierId;
+  if (supId !== undefined && supId !== null) searchParams.append('supplier_id', String(supId));
   if (params.page !== undefined) searchParams.append('page', String(params.page));
   if (params.limit !== undefined) searchParams.append('limit', String(params.limit));
   const qs = searchParams.toString();
@@ -23,14 +25,14 @@ export const departmentService = {
     return fetchApi<ApiResponse<Department>>(`/departments/${id}`);
   },
 
-  async create(data: { name: string; status?: string }): Promise<ApiResponse<Department>> {
+  async create(data: { name: string; supplier_id?: number | null; status?: string }): Promise<ApiResponse<Department>> {
     return fetchApi<ApiResponse<Department>>('/departments', {
       method: 'POST',
       body: JSON.stringify(data)
     });
   },
 
-  async update(id: number, data: { name?: string; status?: string }): Promise<ApiResponse<Department>> {
+  async update(id: number, data: { name?: string; supplier_id?: number | null; status?: string }): Promise<ApiResponse<Department>> {
     return fetchApi<ApiResponse<Department>>(`/departments/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)

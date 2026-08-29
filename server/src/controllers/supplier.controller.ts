@@ -21,9 +21,31 @@ export class SupplierController {
       });
     } catch (error: any) {
       console.error('Error fetching suppliers:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error?.message || 'Không thể tải danh sách đơn vị' 
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể tải danh sách đơn vị'
+      });
+    }
+  }
+
+  async getAllSuppliersWithDepartments(req: Request, res: Response): Promise<void> {
+    try {
+      const status = req.query.status ? String(req.query.status) : undefined;
+      const search = req.query.search ? String(req.query.search) : undefined;
+      const page = req.query.page ? parseInt(String(req.query.page), 10) : undefined;
+      const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : undefined;
+
+      const result = await supplierService.getAllSuppliersWithDepartments({ status, search, page, limit });
+      res.status(200).json({
+        success: true,
+        data: result.items,
+        pagination: result.pagination
+      });
+    } catch (error: any) {
+      console.error('Error fetching suppliers with departments:', error);
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể tải danh sách đơn vị'
       });
     }
   }
@@ -46,9 +68,9 @@ export class SupplierController {
       res.status(200).json({ success: true, data: supplier });
     } catch (error: any) {
       console.error('Error fetching supplier:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error?.message || 'Không thể lấy thông tin đơn vị' 
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể lấy thông tin đơn vị'
       });
     }
   }
@@ -58,10 +80,10 @@ export class SupplierController {
     try {
       const parsed = SupplierSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ 
-          success: false, 
-          message: 'Dữ liệu không hợp lệ: ' + parsed.error.issues.map(i => i.message).join(', '), 
-          errors: parsed.error.issues 
+        res.status(400).json({
+          success: false,
+          message: 'Dữ liệu không hợp lệ: ' + parsed.error.issues.map(i => i.message).join(', '),
+          errors: parsed.error.issues
         });
         return;
       }
@@ -74,9 +96,9 @@ export class SupplierController {
         return;
       }
       console.error('Error creating supplier:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error?.message || 'Không thể thêm mới đơn vị' 
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể thêm mới đơn vị'
       });
     }
   }
@@ -92,10 +114,10 @@ export class SupplierController {
 
       const parsed = SupplierSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ 
-          success: false, 
-          message: 'Dữ liệu không hợp lệ: ' + parsed.error.issues.map(i => i.message).join(', '), 
-          errors: parsed.error.issues 
+        res.status(400).json({
+          success: false,
+          message: 'Dữ liệu không hợp lệ: ' + parsed.error.issues.map(i => i.message).join(', '),
+          errors: parsed.error.issues
         });
         return;
       }
@@ -109,9 +131,9 @@ export class SupplierController {
       res.status(200).json({ success: true, message: 'Cập nhật đơn vị thành công', data: updated });
     } catch (error: any) {
       console.error('Error updating supplier:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error?.message || 'Không thể cập nhật đơn vị' 
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể cập nhật đơn vị'
       });
     }
   }
@@ -136,9 +158,9 @@ export class SupplierController {
       });
     } catch (error: any) {
       console.error('Error deleting supplier:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error?.message || 'Không thể xóa đơn vị' 
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể xóa đơn vị'
       });
     }
   }

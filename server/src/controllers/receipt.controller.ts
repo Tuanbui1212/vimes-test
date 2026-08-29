@@ -13,9 +13,9 @@ export class ReceiptController {
       res.status(200).json({ success: true, data: receipts });
     } catch (error: any) {
       console.error('Error fetching receipts:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error?.message || 'Không thể tải danh sách phiếu nhập kho' 
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể tải danh sách phiếu nhập kho'
       });
     }
   }
@@ -38,9 +38,9 @@ export class ReceiptController {
       res.status(200).json({ success: true, data: receipt });
     } catch (error: any) {
       console.error('Error fetching receipt voucher:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error?.message || 'Không thể tải chi tiết phiếu nhập kho' 
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể tải chi tiết phiếu nhập kho'
       });
     }
   }
@@ -52,7 +52,7 @@ export class ReceiptController {
       const result = await receiptService.createReceipt(parsedData);
       res.status(201).json({
         success: true,
-        message: 'Lập phiếu nhập kho thành công',
+        message: `Lập phiếu nhập kho ${result.voucherCode} thành công`,
         data: result
       });
     } catch (error: any) {
@@ -75,9 +75,9 @@ export class ReceiptController {
       }
 
       console.error('Error creating receipt voucher:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error?.message || 'Không thể lập phiếu nhập kho' 
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Không thể lập phiếu nhập kho'
       });
     }
   }

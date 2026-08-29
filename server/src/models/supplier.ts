@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Department } from './department.js';
 
 export const SupplierSchema = z.object({
   id: z.number().int("ID nhà cung cấp phải là số nguyên").optional(),
@@ -9,3 +10,6 @@ export const SupplierSchema = z.object({
 });
 
 export type Supplier = z.infer<typeof SupplierSchema>;
+export type SupplierWithDepartments = Supplier & {
+  departments: Department[];
+}

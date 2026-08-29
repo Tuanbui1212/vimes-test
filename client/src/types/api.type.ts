@@ -9,6 +9,8 @@ export interface PaginationMetadata {
 export interface PaginationParams {
   search?: string;
   status?: string;
+  supplier_id?: number | null;
+  supplierId?: number | null;
   page?: number;
   limit?: number;
 }

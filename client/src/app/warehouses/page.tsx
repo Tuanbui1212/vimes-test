@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Button, Skeleton, Toast, Modal, ConfirmModal, Input, Pagination } from '@/components';
+import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination } from '@/components';
 import { useDebounce } from '@/hooks';
 import { warehouseService } from '@/services';
 import type { Warehouse } from '@/types';
 import { APP_PATHS } from '@/constants';
 import { Warehouse as WarehouseIcon, Search, RefreshCw, Plus, AlertCircle, MapPin, Edit3, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function WarehousesPage() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -21,9 +22,6 @@ export default function WarehousesPage() {
   const [pageSize, setPageSize] = useState(24);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-
-  // Toast state
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning' | 'info'; message: string } | null>(null);
 
   // Modal Create / Edit state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,10 +124,7 @@ export default function WarehousesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      setToast({ 
-        type: 'warning', 
-        message: 'Vui lòng kiểm tra và điền đầy đủ các trường bắt buộc (đang báo viền đỏ)!' 
-      });
+      toast.warning('Vui lòng kiểm tra và điền đầy đủ các trường bắt buộc (đang báo viền đỏ)!');
       return;
     }
 
@@ -137,15 +132,15 @@ export default function WarehousesPage() {
     try {
       if (editingWarehouse) {
         const res = await warehouseService.update(editingWarehouse.id, formData);
-        setToast({ type: 'success', message: res.message || 'Cập nhật kho bãi thành công' });
+        toast.success(res.message || 'Cập nhật kho bãi thành công');
       } else {
         const res = await warehouseService.create(formData);
-        setToast({ type: 'success', message: res.message || 'Thêm mới kho bãi thành công' });
+        toast.success(res.message || 'Thêm mới kho bãi thành công');
       }
       setIsModalOpen(false);
       loadWarehouses();
     } catch (err: any) {
-      setToast({ type: 'error', message: err?.message || 'Có lỗi xảy ra khi lưu dữ liệu' });
+      toast.error(err?.message || 'Có lỗi xảy ra khi lưu dữ liệu');
     } finally {
       setIsSubmitting(false);
     }
@@ -156,11 +151,11 @@ export default function WarehousesPage() {
     setIsDeleting(true);
     try {
       const res = await warehouseService.delete(deletingWarehouse.id);
-      setToast({ type: 'success', message: res.message || 'Xóa kho bãi thành công' });
+      toast.success(res.message || 'Xóa kho bãi thành công');
       setDeletingWarehouse(null);
       loadWarehouses();
     } catch (err: any) {
-      setToast({ type: 'error', message: err?.message || 'Không thể xóa kho bãi' });
+      toast.error(err?.message || 'Không thể xóa kho bãi');
     } finally {
       setIsDeleting(false);
     }
@@ -178,13 +173,6 @@ export default function WarehousesPage() {
 
   return (
     <>
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
 
       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-20 flex items-center justify-between shadow-xs">
         <div>

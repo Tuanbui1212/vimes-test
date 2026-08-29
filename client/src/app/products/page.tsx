@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Button, Skeleton, Toast, Modal, ConfirmModal, Input, Pagination } from '@/components';
+import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination } from '@/components';
 import { useDebounce } from '@/hooks';
 import { productService } from '@/services';
 import type { Product } from '@/types';
 import { APP_PATHS } from '@/constants';
 import { Package, Search, RefreshCw, Plus, AlertCircle, Edit3, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -21,9 +22,6 @@ export default function ProductsPage() {
   const [pageSize, setPageSize] = useState(24);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-
-  // Toast state
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning' | 'info'; message: string } | null>(null);
 
   // Modal Create / Edit state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -172,10 +170,7 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      setToast({ 
-        type: 'warning', 
-        message: 'Vui lòng kiểm tra và điền đầy đủ các trường bắt buộc (đang báo viền đỏ)!' 
-      });
+      toast.warning('Vui lòng kiểm tra và điền đầy đủ các trường bắt buộc (đang báo viền đỏ)!');
       return;
     }
 
@@ -183,15 +178,15 @@ export default function ProductsPage() {
     try {
       if (editingProduct) {
         const res = await productService.update(editingProduct.id, formData);
-        setToast({ type: 'success', message: res.message || 'Cập nhật vật tư thành công' });
+        toast.success(res.message || 'Cập nhật vật tư thành công');
       } else {
         const res = await productService.create(formData);
-        setToast({ type: 'success', message: res.message || 'Thêm mới vật tư thành công' });
+        toast.success(res.message || 'Thêm mới vật tư thành công');
       }
       setIsModalOpen(false);
       loadProducts();
     } catch (err: any) {
-      setToast({ type: 'error', message: err?.message || 'Có lỗi xảy ra khi lưu dữ liệu' });
+      toast.error(err?.message || 'Có lỗi xảy ra khi lưu dữ liệu');
     } finally {
       setIsSubmitting(false);
     }
@@ -202,11 +197,11 @@ export default function ProductsPage() {
     setIsDeleting(true);
     try {
       const res = await productService.delete(deletingProduct.id);
-      setToast({ type: 'success', message: res.message || 'Xóa vật tư thành công' });
+      toast.success(res.message || 'Xóa vật tư thành công');
       setDeletingProduct(null);
       loadProducts();
     } catch (err: any) {
-      setToast({ type: 'error', message: err?.message || 'Không thể xóa vật tư' });
+      toast.error(err?.message || 'Không thể xóa vật tư');
     } finally {
       setIsDeleting(false);
     }
@@ -226,13 +221,6 @@ export default function ProductsPage() {
 
   return (
     <>
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
 
       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-20 flex items-center justify-between shadow-xs">
         <div>

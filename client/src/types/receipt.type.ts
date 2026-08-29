@@ -15,7 +15,7 @@ export interface ReceiptItem {
 }
 
 export interface ReceiptVoucherPayload {
-  voucher_code: string;
+  voucher_code?: string;
   receipt_date?: string;
   supplier_id?: number | null;
   department_id?: number | null;
@@ -33,6 +33,7 @@ export interface ReceiptVoucherPayload {
 
 export interface ReceiptVoucher extends Omit<ReceiptVoucherPayload, 'items'> {
   id: number;
+  voucher_code: string;
   total_amount: number;
   created_at: string;
   supplier_name?: string;

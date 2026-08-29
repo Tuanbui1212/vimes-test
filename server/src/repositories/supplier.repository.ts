@@ -1,8 +1,15 @@
 import { pool } from '../config/db.js';
-import type { Supplier } from '../models/supplier.js';
+import type { Supplier, SupplierWithDepartments } from '../models/supplier.js';
 import type { PoolClient } from 'pg';
 
 export class SupplierRepository {
+  // Private helper to count total suppliers
+  private async getCount(whereClause: string, values: any[], db: PoolClient | typeof pool): Promise<number> {
+    const countQuery = `SELECT COUNT(*) AS count FROM suppliers s ${whereClause};`;
+    const countResult = await db.query(countQuery, values);
+    return parseInt(countResult.rows[0]?.count || '0', 10);
+  }
+
   // Get suppliers with optional search, status filter, and pagination
   async getSuppliers(
     params: { search?: string; status?: string; page?: number; limit?: number },
@@ -10,37 +17,38 @@ export class SupplierRepository {
   ): Promise<{ suppliers: Supplier[]; total: number }> {
     const db = client || pool;
     const conditions: string[] = [];
-    const values: any[] = [];
+    const filterValues: any[] = [];
     let paramIndex = 1;
 
     if (params.status) {
-      conditions.push(`status = $${paramIndex++}`);
-      values.push(params.status);
+      conditions.push(`s.status = $${paramIndex++}`);
+      filterValues.push(params.status);
     }
 
     if (params.search && params.search.trim()) {
       const searchTerm = `%${params.search.trim()}%`;
-      conditions.push(`name ILIKE $${paramIndex++}`);
-      values.push(searchTerm);
+      conditions.push(`s.name ILIKE $${paramIndex++}`);
+      filterValues.push(searchTerm);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // 1. Total Count
-    const countQuery = `SELECT COUNT(*) AS count FROM suppliers ${whereClause};`;
-    const countResult = await db.query(countQuery, values);
-    const total = parseInt(countResult.rows[0]?.count || '0', 10);
-
-    // 2. Data
-    let dataQuery = `SELECT id, name, COALESCE(status, 'ACTIVE') AS status FROM suppliers ${whereClause} ORDER BY id ASC`;
+    // Data Query
+    const dataValues = [...filterValues];
+    let dataQuery = `SELECT id, name, COALESCE(status, 'ACTIVE') AS status FROM suppliers s ${whereClause} ORDER BY id ASC`;
     if (params.limit && params.limit > 0) {
       const page = params.page && params.page > 0 ? params.page : 1;
       const offset = (page - 1) * params.limit;
       dataQuery += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-      values.push(params.limit, offset);
+      dataValues.push(params.limit, offset);
     }
 
-    const result = await db.query(dataQuery, values);
+    // Run count query and data query in parallel using Promise.all
+    const [total, result] = await Promise.all([
+      this.getCount(whereClause, filterValues, db),
+      db.query(dataQuery, dataValues)
+    ]);
+
     return { suppliers: result.rows, total };
   }
 
@@ -48,6 +56,71 @@ export class SupplierRepository {
   async getAllSuppliers(status?: string, client?: PoolClient): Promise<Supplier[]> {
     const res = await this.getSuppliers({ status }, client);
     return res.suppliers;
+  }
+
+  // get all suppliers with departments and total count
+  async getAllSuppliersWithDepartments(
+    params: { search?: string; status?: string; page?: number; limit?: number },
+    client?: PoolClient
+  ): Promise<{ items: SupplierWithDepartments[]; total: number }> {
+    const db = client || pool;
+    const conditions: string[] = [];
+    const filterValues: any[] = [];
+    let paramIndex = 1;
+
+    if (params.status) {
+      conditions.push(`s.status = $${paramIndex++}`);
+      filterValues.push(params.status);
+    }
+
+    if (params.search && params.search.trim()) {
+      const searchTerm = `%${params.search.trim()}%`;
+      conditions.push(`s.name ILIKE $${paramIndex++}`);
+      filterValues.push(searchTerm);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Data Query
+    const dataValues = [...filterValues];
+    let query = `
+      SELECT 
+        s.id, 
+        s.name, 
+        COALESCE(s.status, 'ACTIVE') AS status,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', d.id,
+              'name', d.name,
+              'status', COALESCE(d.status, 'ACTIVE')
+            )
+          ) FILTER (WHERE d.id IS NOT NULL), 
+          '[]'::json
+        ) AS departments
+      FROM suppliers s
+      LEFT JOIN departments d ON d.supplier_id = s.id
+      ${whereClause}
+      GROUP BY s.id
+      ORDER BY s.id ASC
+    `;
+
+    if (params.limit && params.limit > 0) {
+      const page = params.page && params.page > 0 ? params.page : 1;
+      const offset = (page - 1) * params.limit;
+      query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+      dataValues.push(params.limit, offset);
+    }
+
+    query += ';';
+
+    // Run count query and data query concurrently using Promise.all
+    const [total, result] = await Promise.all([
+      this.getCount(whereClause, filterValues, db),
+      db.query(query, dataValues)
+    ]);
+
+    return { items: result.rows, total };
   }
 
   // Get supplier by ID

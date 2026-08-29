@@ -2,55 +2,82 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Button, Skeleton, Toast, Modal, ConfirmModal, Input, Pagination } from '@/components';
+import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination } from '@/components';
 import { useDebounce } from '@/hooks';
-import { supplierService } from '@/services';
-import type { Supplier } from '@/types';
+import { supplierService, departmentService } from '@/services';
+import type { SupplierWithDepartments, Supplier, Department } from '@/types';
 import { APP_PATHS } from '@/constants';
-import { Building2, Search, RefreshCw, Plus, AlertCircle, Edit3, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  Building2,
+  Search,
+  RefreshCw,
+  Plus,
+  AlertCircle,
+  Edit3,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+  ChevronRight,
+  Users,
+  FolderOpen,
+  Folder
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function SuppliersPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierWithDepartments[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 350);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination state (default 24 rows)
+  // Pagination state (default 15 rows)
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(24);
+  const [pageSize, setPageSize] = useState(15);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Toast state
-  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning' | 'info'; message: string } | null>(null);
+  // Expand / Collapse state for Accordion
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
-  // Modal Create / Edit state
+  // Modal Create / Edit Supplier
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [formData, setFormData] = useState<{ name: string; status: string }>({ name: '', status: 'ACTIVE' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Confirm Delete state
+  // Modal Confirm Delete Supplier
   const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Modal Create Department under a Supplier
+  const [addDeptModal, setAddDeptModal] = useState<{ open: boolean; supplier: Supplier | null }>({
+    open: false,
+    supplier: null
+  });
+  const [deptName, setDeptName] = useState('');
+  const [isSubmittingDept, setIsSubmittingDept] = useState(false);
+
+  // Fetch Suppliers with Departments from API
   const loadSuppliers = useCallback(async (p = page, size = pageSize, query = debouncedSearch) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await supplierService.getAll({
+      const res = await supplierService.getAllWithDepartments({
         search: query.trim() || undefined,
         page: p,
         limit: size
       });
-      if (res.data) setSuppliers(res.data);
+      if (res.data) {
+        setSuppliers(res.data);
+      }
       if (res.pagination) {
         setTotal(res.pagination.total);
         setTotalPages(res.pagination.totalPages);
       }
     } catch (err: any) {
-      console.error('Error loading suppliers:', err);
+      console.error('Error loading suppliers with departments:', err);
       setError(err?.message || 'Không thể kết nối đến máy chủ Backend.');
     } finally {
       setIsLoading(false);
@@ -62,6 +89,27 @@ export default function SuppliersPage() {
     setPage(1);
   }, [debouncedSearch, pageSize]);
 
+  const toggleExpand = (id: number) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setExpandedIds(new Set(suppliers.map((s) => s.id)));
+  };
+
+  const collapseAll = () => {
+    setExpandedIds(new Set());
+  };
+
+  // Handle Supplier CRUD
   const handleOpenCreate = () => {
     setEditingSupplier(null);
     setFormData({ name: '', status: 'ACTIVE' });
@@ -80,15 +128,15 @@ export default function SuppliersPage() {
     try {
       if (editingSupplier) {
         const res = await supplierService.update(editingSupplier.id, formData);
-        setToast({ type: 'success', message: res.message || 'Cập nhật đơn vị thành công' });
+        toast.success(res.message || 'Cập nhật đơn vị thành công');
       } else {
         const res = await supplierService.create(formData);
-        setToast({ type: 'success', message: res.message || 'Thêm mới đơn vị thành công' });
+        toast.success(res.message || 'Thêm mới đơn vị thành công');
       }
       setIsModalOpen(false);
       loadSuppliers();
     } catch (err: any) {
-      setToast({ type: 'error', message: err?.message || 'Có lỗi xảy ra khi lưu dữ liệu' });
+      toast.error(err?.message || 'Có lỗi xảy ra khi lưu dữ liệu');
     } finally {
       setIsSubmitting(false);
     }
@@ -99,41 +147,51 @@ export default function SuppliersPage() {
     setIsDeleting(true);
     try {
       const res = await supplierService.delete(deletingSupplier.id);
-      setToast({ type: 'success', message: res.message || 'Xóa đơn vị thành công' });
+      toast.success(res.message || 'Xóa đơn vị thành công');
       setDeletingSupplier(null);
       loadSuppliers();
     } catch (err: any) {
-      setToast({ type: 'error', message: err?.message || 'Không thể xóa đơn vị' });
+      toast.error(err?.message || 'Không thể xóa đơn vị');
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const filtered = suppliers.filter((s) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return s.name.toLowerCase().includes(term);
-  });
+  // Handle Quick Add Department to a Supplier
+  const handleAddDeptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addDeptModal.supplier || !deptName.trim()) return;
+
+    setIsSubmittingDept(true);
+    try {
+      const res = await departmentService.create({
+        name: deptName.trim(),
+        supplier_id: addDeptModal.supplier.id,
+        status: 'ACTIVE'
+      });
+      toast.success(res.message || `Đã thêm phòng ban "${deptName.trim()}" thuộc ${addDeptModal.supplier.name}`);
+      setAddDeptModal({ open: false, supplier: null });
+      setDeptName('');
+      loadSuppliers();
+    } catch (err: any) {
+      toast.error(err?.message || 'Không thể thêm phòng ban');
+    } finally {
+      setIsSubmittingDept(false);
+    }
+  };
 
   return (
     <>
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
-
+      {/* Header */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-20 flex items-center justify-between shadow-xs">
         <div>
           <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-cyan-50 text-cyan-700">
               <Building2 className="w-4 h-4" />
             </span>
-            Danh Mục Đơn Vị
+            Danh Mục Đơn Vị & Phòng Ban Trực Thuộc
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">Quản lý danh sách các đơn vị giao hàng và đối tác</p>
+          <p className="text-xs text-slate-500 mt-0.5">Sơ đồ phân cấp Ngăn xếp (Cha - Con): 1 Đơn vị quản lý nhiều Phòng ban / Khoa</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -152,16 +210,12 @@ export default function SuppliersPage() {
             onClick={handleOpenCreate}
             leftIcon={<Plus className="w-4 h-4" />}
           >
-            Thêm Đơn Vị
+            Thêm Đơn Vị Mới
           </Button>
-          <Link href={APP_PATHS.HOME}>
-            <Button variant="outline" size="sm">
-              Lập Phiếu Nhập
-            </Button>
-          </Link>
         </div>
       </header>
 
+      {/* Main Content */}
       <main className="p-6 max-w-[1480px] w-full mx-auto space-y-6">
         {error && (
           <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-between gap-4">
@@ -176,95 +230,217 @@ export default function SuppliersPage() {
         )}
 
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+          {/* Top Bar: Search & Expand Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div className="relative max-w-md w-full">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Tìm tên đơn vị..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 focus:bg-white focus:border-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-600/20 transition-all"
-              />
+            <div className="flex items-center gap-3 max-w-lg w-full">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm đơn vị..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 focus:bg-white focus:border-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-600/20 transition-all"
+                />
+              </div>
             </div>
 
-            <div className="text-xs text-slate-500 font-medium">
-              Tổng số: <span className="font-bold text-slate-800">{total}</span> đơn vị
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={expandAll}
+                className="text-xs text-cyan-700 hover:text-cyan-800 font-medium px-2 py-1 rounded hover:bg-cyan-50 transition-colors cursor-pointer"
+              >
+                + Mở tất cả
+              </button>
+              <span className="text-slate-300">|</span>
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="text-xs text-slate-500 hover:text-slate-700 font-medium px-2 py-1 rounded hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                - Thu gọn
+              </button>
+              <span className="text-slate-300">|</span>
+              <div className="text-xs text-slate-500 font-medium">
+                Tổng số: <span className="font-bold text-slate-800">{total}</span> đơn vị
+              </div>
             </div>
           </div>
 
+          {/* Accordion Table List */}
           <div className="overflow-x-auto mt-4">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500 text-[11px] font-semibold uppercase tracking-wider bg-slate-50/50">
+                  <th className="py-3 px-4 w-12 text-center"></th>
                   <th className="py-3 px-4 w-14 text-center">STT</th>
                   <th className="py-3 px-4">Tên Đơn Vị / Nhà Cung Cấp</th>
-                  <th className="py-3 px-4 w-36">Trạng Thái</th>
-                  <th className="py-3 px-4 w-28 text-right">Thao Tác</th>
+                  <th className="py-3 px-4 w-44">Phòng Ban Trực Thuộc</th>
+                  <th className="py-3 px-4 w-32">Trạng Thái</th>
+                  <th className="py-3 px-4 w-56 text-right">Thao Tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
                 {isLoading ? (
-                  Array.from({ length: 8 }).map((_, idx) => (
+                  Array.from({ length: 6 }).map((_, idx) => (
                     <tr key={idx} className="animate-pulse">
+                      <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-4 mx-auto" /></td>
                       <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-6 mx-auto" /></td>
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-64" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-28" /></td>
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-20" /></td>
-                      <td className="py-3.5 px-4 text-right"><Skeleton className="h-4 w-16 ml-auto" /></td>
+                      <td className="py-3.5 px-4 text-right"><Skeleton className="h-4 w-28 ml-auto" /></td>
                     </tr>
                   ))
                 ) : suppliers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-slate-400">
+                    <td colSpan={6} className="py-10 text-center text-slate-400">
                       Không tìm thấy đơn vị nào phù hợp
                     </td>
                   </tr>
                 ) : (
-                  suppliers.map((item, index) => (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
-                      <td className="py-3 px-4 text-center font-mono font-medium text-slate-500">
-                        {(page - 1) * pageSize + index + 1}
-                      </td>
-                      <td className="py-3 px-4 font-medium text-slate-900">{item.name}</td>
-                      <td className="py-3 px-4">
-                        {item.status === 'ACTIVE' || !item.status ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3" /> Đang dùng
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                            <XCircle className="w-3 h-3" /> Ngưng dùng
-                          </span>
+                  suppliers.map((item, index) => {
+                    const isExpanded = expandedIds.has(item.id);
+                    const deptCount = item.departments?.length || 0;
+
+                    return (
+                      <React.Fragment key={item.id}>
+                        {/* Parent Row: Supplier */}
+                        <tr
+                          className={`hover:bg-cyan-50/40 transition-colors cursor-pointer ${
+                            isExpanded ? 'bg-cyan-50/30' : ''
+                          }`}
+                          onClick={() => toggleExpand(item.id)}
+                        >
+                          <td className="py-3 px-4 text-center text-slate-400">
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4 text-cyan-700 mx-auto" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-slate-400 mx-auto" />
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-center font-mono font-medium text-slate-500">
+                            {(page - 1) * pageSize + index + 1}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <span className="p-1 rounded bg-slate-100 text-slate-600">
+                                <Building2 className="w-4 h-4" />
+                              </span>
+                              <span className="font-bold text-slate-900">{item.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                                deptCount > 0
+                                  ? 'bg-cyan-50 text-cyan-800 border border-cyan-200'
+                                  : 'bg-slate-100 text-slate-500'
+                              }`}
+                            >
+                              <Users className="w-3 h-3 text-cyan-600" />
+                              {deptCount > 0 ? `${deptCount} phòng ban` : 'Chưa có phòng ban'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            {item.status === 'ACTIVE' || !item.status ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3" /> Đang dùng
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                <XCircle className="w-3 h-3" /> Ngưng dùng
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setAddDeptModal({ open: true, supplier: item })}
+                                className="p-1.5 text-cyan-700 hover:bg-cyan-100 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-semibold whitespace-nowrap"
+                                title="Thêm phòng ban trực thuộc"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Thêm Khoa
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(item)}
+                                className="p-1.5 text-slate-400 hover:text-cyan-700 hover:bg-cyan-50 rounded-lg transition-colors cursor-pointer"
+                                title="Chỉnh sửa đơn vị"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeletingSupplier(item)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                title="Xóa đơn vị"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Child Rows: Sub-Departments Accordion Dropdown */}
+                        {isExpanded && (
+                          <tr className="bg-slate-50/70 border-b border-slate-200/80">
+                            <td colSpan={6} className="py-3 px-4 pl-14">
+                              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+                                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                    <FolderOpen className="w-3.5 h-3.5 text-cyan-600" />
+                                    Danh sách Phòng Ban / Khoa thuộc "{item.name}"
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => setAddDeptModal({ open: true, supplier: item })}
+                                    leftIcon={<Plus className="w-3 h-3" />}
+                                  >
+                                    Thêm Phòng Ban Mới
+                                  </Button>
+                                </div>
+
+                                {deptCount === 0 ? (
+                                  <div className="py-4 text-center text-slate-400 text-xs italic">
+                                    Đơn vị này chưa gán phòng ban trực thuộc nào. Bấm nút "+ Thêm Phòng Ban Mới" để tạo nhanh!
+                                  </div>
+                                ) : (
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mt-2">
+                                    {item.departments.map((dept) => (
+                                      <div
+                                        key={dept.id}
+                                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-cyan-200 hover:shadow-2xs transition-all"
+                                      >
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                          <Users className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+                                          <span className="font-medium text-slate-800 text-xs truncate">
+                                            {dept.name}
+                                          </span>
+                                        </div>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-emerald-50 text-emerald-700 border border-emerald-100 shrink-0">
+                                          ACTIVE
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
                         )}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(item)}
-                            className="p-1.5 text-slate-400 hover:text-cyan-700 hover:bg-cyan-50 rounded-lg transition-colors cursor-pointer"
-                            title="Chỉnh sửa"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeletingSupplier(item)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            title="Xóa đơn vị"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                      </React.Fragment>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* Pagination Controls with 4 Navigation Buttons (<<, <, >, >>) */}
+          {/* Pagination Controls */}
           <Pagination
             currentPage={page}
             totalPages={totalPages}
@@ -283,7 +459,7 @@ export default function SuppliersPage() {
         </div>
       </main>
 
-      {/* Modal Create / Edit */}
+      {/* Modal Create / Edit Supplier */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -330,6 +506,42 @@ export default function SuppliersPage() {
               isLoading={isSubmitting}
             >
               {editingSupplier ? 'Lưu Thay Đổi' : 'Thêm Mới'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Quick Add Department under Supplier */}
+      <Modal
+        isOpen={addDeptModal.open}
+        onClose={() => setAddDeptModal({ open: false, supplier: null })}
+        title="Thêm Phòng Ban / Khoa Mới"
+        subtitle={addDeptModal.supplier ? `Đơn vị trực thuộc: ${addDeptModal.supplier.name}` : ''}
+      >
+        <form onSubmit={handleAddDeptSubmit} className="space-y-4">
+          <Input
+            label="Tên Phòng Ban / Khoa"
+            required
+            placeholder="Ví dụ: Khoa Cấp Cứu - Hồi Sức Tích Cực"
+            value={deptName}
+            onChange={(e) => setDeptName(e.target.value)}
+          />
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAddDeptModal({ open: false, supplier: null })}
+              disabled={isSubmittingDept}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isSubmittingDept}
+            >
+              Tạo & Gán Vào Đơn Vị
             </Button>
           </div>
         </form>

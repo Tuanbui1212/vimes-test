@@ -1,5 +1,5 @@
 import { fetchApi } from './api';
-import type { ApiResponse, PaginationParams, Supplier } from '@/types';
+import type { ApiResponse, PaginationParams, Supplier, SupplierWithDepartments } from '@/types';
 
 function buildQuery(params?: PaginationParams | string): string {
   if (!params) return '';
@@ -17,6 +17,11 @@ export const supplierService = {
   async getAll(params?: PaginationParams | string): Promise<ApiResponse<Supplier[]>> {
     const query = buildQuery(params);
     return fetchApi<ApiResponse<Supplier[]>>(`/suppliers${query}`);
+  },
+
+  async getAllWithDepartments(params?: PaginationParams | string): Promise<ApiResponse<SupplierWithDepartments[]>> {
+    const query = buildQuery(params);
+    return fetchApi<ApiResponse<SupplierWithDepartments[]>>(`/suppliers/with-departments${query}`);
   },
 
   async getById(id: number): Promise<ApiResponse<Supplier>> {

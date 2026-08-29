@@ -1,5 +1,5 @@
 import { pool } from '../config/db.js';
-import type { ReceiptVoucherPayload } from '../models/receipt.js';
+import type { ReceiptVoucherPayload, ReceiptItem } from '../models/receipt.js';
 import { ReceiptRepository } from '../repositories/receipt.repository.js';
 import { WarehouseRepository } from '../repositories/warehouse.repository.js';
 import { SupplierRepository } from '../repositories/supplier.repository.js';
@@ -80,9 +80,12 @@ export class ReceiptService {
       if (department.status === 'INACTIVE') {
         throw new Error(`Phòng ban '${department.name}' đã ngưng hoạt động`);
       }
+      if (department.supplier_id && payload.supplier_id && department.supplier_id !== payload.supplier_id) {
+        throw new Error(`Phòng ban '${department.name}' không trực thuộc Đơn vị được chọn`);
+      }
     }
 
-    const productIds = Array.from(new Set(payload.items.map((item) => item.product_id)));
+    const productIds = Array.from(new Set(payload.items.map((item: ReceiptItem) => item.product_id)));
     const products = await this.productRepository.getProductsByIds(productIds);
     const productMap = new Map(products.map((p) => [p.id, p]));
 
@@ -96,7 +99,7 @@ export class ReceiptService {
       }
     }
 
-    const calculatedTotal = payload.items.reduce((sum, item) => {
+    const calculatedTotal = payload.items.reduce((sum: number, item: ReceiptItem) => {
       const itemTotal = item.total_amount !== undefined ? item.total_amount : (item.actual_quantity * item.price);
       return sum + itemTotal;
     }, 0);
@@ -113,11 +116,11 @@ export class ReceiptService {
       await this.receiptRepository.insertVoucherDetails(client, voucherId, payload.items);
 
       await client.query('COMMIT');
-      return { 
-        success: true, 
-        voucherId, 
-        voucherCode: payload.voucher_code, 
-        totalAmount: calculatedTotal 
+      return {
+        success: true,
+        voucherId,
+        voucherCode: payload.voucher_code,
+        totalAmount: calculatedTotal
       };
     } catch (error) {
       await client.query('ROLLBACK');

@@ -93,13 +93,15 @@ export interface QuickCreateDepartmentProps {
   onClose: () => void;
   onSuccess: (department: Department) => void;
   initialName?: string;
+  supplierId?: number | null;
 }
 
 export const QuickCreateDepartmentModal: React.FC<QuickCreateDepartmentProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  initialName = ''
+  initialName = '',
+  supplierId
 }) => {
   const [name, setName] = useState(initialName);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export const QuickCreateDepartmentModal: React.FC<QuickCreateDepartmentProps> = 
 
     setIsSubmitting(true);
     try {
-      const res = await departmentService.create({ name: name.trim(), status: 'ACTIVE' });
+      const res = await departmentService.create({ name: name.trim(), supplier_id: supplierId ?? undefined, status: 'ACTIVE' });
       if (res.data) {
         onSuccess(res.data);
       }

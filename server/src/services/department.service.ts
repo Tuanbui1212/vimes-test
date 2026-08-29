@@ -8,8 +8,8 @@ export class DepartmentService {
     this.departmentRepository = new DepartmentRepository();
   }
 
-  // Get departments with search and pagination metadata
-  async getDepartments(params: { search?: string; status?: string; page?: number; limit?: number }): Promise<{
+  // Get departments with search, supplierId filter and pagination metadata
+  async getDepartments(params: { search?: string; status?: string; supplierId?: number; page?: number; limit?: number }): Promise<{
     items: Department[];
     pagination: {
       page: number;
@@ -40,9 +40,9 @@ export class DepartmentService {
     };
   }
 
-  // Get all departments with optional status filter
-  async getAllDepartments(status?: string): Promise<Department[]> {
-    return await this.departmentRepository.getAllDepartments(status);
+  // Get all departments with optional status and supplierId filter
+  async getAllDepartments(status?: string, supplierId?: number): Promise<Department[]> {
+    return await this.departmentRepository.getAllDepartments(status, supplierId);
   }
 
   // Get department by ID
@@ -51,12 +51,12 @@ export class DepartmentService {
   }
 
   // Create new department
-  async createDepartment(data: { name: string; status?: string }): Promise<Department> {
+  async createDepartment(data: { name: string; supplier_id?: number | null; status?: string }): Promise<Department> {
     return await this.departmentRepository.insertDepartment(data);
   }
 
   // Update existing department
-  async updateDepartment(id: number, data: { name?: string; status?: string }): Promise<Department | null> {
+  async updateDepartment(id: number, data: { name?: string; supplier_id?: number | null; status?: string }): Promise<Department | null> {
     const existing = await this.departmentRepository.getDepartmentById(id);
     if (!existing) {
       throw new Error('Phòng ban không tồn tại trên hệ thống');

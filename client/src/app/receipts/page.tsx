@@ -19,13 +19,14 @@ import {
   FileCheck
 } from 'lucide-react';
 
+import { toast } from 'sonner';
+
 export default function ReceiptsListPage() {
   const [receipts, setReceipts] = useState<ReceiptVoucher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 350);
   const [selectedReceiptDetail, setSelectedReceiptDetail] = useState<ReceiptVoucher | null>(null);
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Pagination state (default 24 rows)
   const [page, setPage] = useState(1);
@@ -42,7 +43,7 @@ export default function ReceiptsListPage() {
       if (res.data) setReceipts(res.data);
     } catch (err) {
       console.error('Error loading receipts:', err);
-      setNotification({ type: 'error', message: 'Không thể tải danh sách phiếu nhập kho' });
+      toast.error('Không thể tải danh sách phiếu nhập kho');
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +56,7 @@ export default function ReceiptsListPage() {
         setSelectedReceiptDetail(res.data);
       }
     } catch (err) {
-      setNotification({ type: 'error', message: 'Không thể lấy chi tiết phiếu' });
+      toast.error('Không thể lấy chi tiết phiếu');
     }
   };
 
@@ -110,31 +111,6 @@ export default function ReceiptsListPage() {
       </header>
 
       <main className="p-6 max-w-[1480px] w-full mx-auto space-y-6">
-        {notification && (
-          <div
-            className={`p-4 rounded-xl flex items-center justify-between gap-3 shadow-md border ${notification.type === 'success'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-rose-50 text-rose-800 border-rose-200'
-              }`}
-          >
-            <div className="flex items-center gap-3">
-              {notification.type === 'success' ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              ) : (
-                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-              )}
-              <span className="text-sm font-medium">{notification.message}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setNotification(null)}
-              className="text-slate-400 hover:text-slate-600 p-1"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div className="relative max-w-md w-full">
