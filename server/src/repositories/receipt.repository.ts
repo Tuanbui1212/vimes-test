@@ -54,6 +54,20 @@ export class ReceiptRepository {
     return result.rows[0] || null;
   }
 
+  async getMaxReceiptCodeByYear(year: number): Promise<number> {
+    const query = `
+    SELECT COALESCE(
+      MAX(CAST(SUBSTRING(voucher_code FROM '^PNK-[0-9]+-([0-9]+)$') AS INTEGER)), 
+      0
+    ) as max_num
+    FROM receipt_vouchers
+    WHERE voucher_code LIKE $1;
+  `;
+    const result = await pool.query(query, [`PNK-${year}-%`]);
+    return parseInt(result.rows[0].max_num, 10) || 0;
+  }
+
+
   // Get all line items for a receipt voucher
   async getReceiptDetailsByVoucherId(voucherId: number): Promise<any[]> {
     const query = `

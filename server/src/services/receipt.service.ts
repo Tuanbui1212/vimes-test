@@ -40,6 +40,14 @@ export class ReceiptService {
     };
   }
 
+  async autoGenerateReceiptCode(): Promise<string> {
+    const currentYear = new Date().getFullYear();
+    const maxNumber = await this.receiptRepository.getMaxReceiptCodeByYear(currentYear);
+    const nextNumber = maxNumber + 1;
+    return `PNK-${currentYear}-${String(nextNumber).padStart(4, '0')}`;
+  }
+
+
   // Create a new receipt voucher
   async createReceipt(payload: ReceiptVoucherPayload) {
     if (!payload.warehouse_id) {
@@ -93,6 +101,10 @@ export class ReceiptService {
       return sum + itemTotal;
     }, 0);
 
+    if (!payload.voucher_code || !payload.voucher_code.trim()) {
+      payload.voucher_code = await this.autoGenerateReceiptCode();
+    }
+
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -101,7 +113,12 @@ export class ReceiptService {
       await this.receiptRepository.insertVoucherDetails(client, voucherId, payload.items);
 
       await client.query('COMMIT');
-      return { success: true, voucherId, totalAmount: calculatedTotal };
+      return { 
+        success: true, 
+        voucherId, 
+        voucherCode: payload.voucher_code, 
+        totalAmount: calculatedTotal 
+      };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

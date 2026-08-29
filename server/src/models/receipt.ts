@@ -11,8 +11,8 @@ export const ReceiptItemSchema = z.object({
 export const ReceiptVoucherPayloadSchema = z.object({
   voucher_code: z.string()
     .trim()
-    .min(1, "Mã phiếu không được để trống")
-    .max(50, "Mã phiếu không được vượt quá 50 ký tự"),
+    .max(50, "Mã phiếu không được vượt quá 50 ký tự")
+    .optional(),
   receipt_date: z.string()
     .trim()
     .min(1, "Ngày lập phiếu không được để trống"),

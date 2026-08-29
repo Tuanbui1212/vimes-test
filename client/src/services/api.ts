@@ -1,4 +1,3 @@
-// Sử dụng relative URL '/api' trên trình duyệt để Next.js Rewrites tự động proxy và che giấu domain backend
 const API_BASE_URL = typeof window !== 'undefined'
   ? '/api'
   : (process.env.BACKEND_URL ? `${process.env.BACKEND_URL.replace(/\/api\/?$/, '')}/api` : 'http://localhost:8080/api');

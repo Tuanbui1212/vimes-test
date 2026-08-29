@@ -9,7 +9,6 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Cấu hình CORS: Cho phép domain Frontend và các request từ Proxy / Server-to-Server
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
@@ -18,8 +17,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // !origin: Các request từ Server-to-Server (Next.js Proxy/Rewrites, Postman, cURL)
-    // origin in allowedOrigins: Các request từ Trình duyệt thuộc domain được cấp phép
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
