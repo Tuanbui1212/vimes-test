@@ -29,6 +29,11 @@ export const Pagination: React.FC<PaginationProps> = ({
   pageSizeOptions = [12, 24, 48, 96],
   className = ''
 }) => {
+  // Tự động ẩn thanh phân trang nếu tổng số bản ghi nhỏ hơn hoặc bằng số dòng/trang
+  if (currentPage === 1 && totalItems <= pageSize) {
+    return null;
+  }
+
   const safeTotalPages = Math.max(1, totalPages);
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);

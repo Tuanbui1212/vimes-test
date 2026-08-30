@@ -9,3 +9,4 @@ export * from './ConfirmModal';
 export * from './QuickCreateModals';
 export * from './Pagination';
 export * from './ReceiptVoucherPreviewModal';
+export * from './LoadingOverlay';

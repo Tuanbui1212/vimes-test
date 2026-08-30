@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination } from '@/components';
+import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination, LoadingOverlay } from '@/components';
 import { useDebounce } from '@/hooks';
 import { supplierService, departmentService } from '@/services';
 import type { SupplierWithDepartments, Supplier, Department } from '@/types';
-import { APP_PATHS } from '@/constants';
 import {
   Building2,
   Search,
@@ -20,8 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
-  FolderOpen,
-  Folder
+  FolderOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -58,6 +55,15 @@ export default function SuppliersPage() {
   });
   const [deptName, setDeptName] = useState('');
   const [isSubmittingDept, setIsSubmittingDept] = useState(false);
+
+  // Modal Edit Department
+  const [editingDept, setEditingDept] = useState<Department | null>(null);
+  const [editDeptName, setEditDeptName] = useState('');
+  const [isSubmittingEditDept, setIsSubmittingEditDept] = useState(false);
+
+  // Modal Confirm Delete Department
+  const [deletingDept, setDeletingDept] = useState<Department | null>(null);
+  const [isDeletingDept, setIsDeletingDept] = useState(false);
 
   // Fetch Suppliers with Departments from API
   const loadSuppliers = useCallback(async (p = page, size = pageSize, query = debouncedSearch) => {
@@ -180,6 +186,47 @@ export default function SuppliersPage() {
     }
   };
 
+  // Handle Edit Department
+  const handleOpenEditDept = (dept: Department) => {
+    setEditingDept(dept);
+    setEditDeptName(dept.name);
+  };
+
+  const handleEditDeptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDept || !editDeptName.trim()) return;
+
+    setIsSubmittingEditDept(true);
+    try {
+      const res = await departmentService.update(editingDept.id, {
+        name: editDeptName.trim()
+      });
+      toast.success(res.message || 'Cập nhật phòng ban thành công');
+      setEditingDept(null);
+      loadSuppliers();
+    } catch (err: any) {
+      toast.error(err?.message || 'Không thể cập nhật phòng ban');
+    } finally {
+      setIsSubmittingEditDept(false);
+    }
+  };
+
+  // Handle Delete Department
+  const handleDeleteDeptConfirm = async () => {
+    if (!deletingDept) return;
+    setIsDeletingDept(true);
+    try {
+      const res = await departmentService.delete(deletingDept.id);
+      toast.success(res.message || 'Xóa phòng ban thành công');
+      setDeletingDept(null);
+      loadSuppliers();
+    } catch (err: any) {
+      toast.error(err?.message || 'Không thể xóa phòng ban');
+    } finally {
+      setIsDeletingDept(false);
+    }
+  };
+
   return (
     <>
       {/* Header */}
@@ -231,7 +278,7 @@ export default function SuppliersPage() {
 
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
           {/* Top Bar: Search & Expand Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4  border-b border-slate-100">
             <div className="flex items-center gap-3 max-w-lg w-full">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -269,14 +316,14 @@ export default function SuppliersPage() {
           </div>
 
           {/* Accordion Table List */}
-          <div className="overflow-x-auto mt-4">
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500 text-[11px] font-semibold uppercase tracking-wider bg-slate-50/50">
                   <th className="py-3 px-4 w-12 text-center"></th>
                   <th className="py-3 px-4 w-14 text-center">STT</th>
                   <th className="py-3 px-4">Tên Đơn Vị / Nhà Cung Cấp</th>
-                  <th className="py-3 px-4 w-44">Phòng Ban Trực Thuộc</th>
+                  <th className="py-3 px-4 w-60 whitespace-nowrap">Phòng Ban Trực Thuộc</th>
                   <th className="py-3 px-4 w-32">Trạng Thái</th>
                   <th className="py-3 px-4 w-56 text-right">Thao Tác</th>
                 </tr>
@@ -288,7 +335,7 @@ export default function SuppliersPage() {
                       <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-4 mx-auto" /></td>
                       <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-6 mx-auto" /></td>
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-64" /></td>
-                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-28" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-36" /></td>
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-20" /></td>
                       <td className="py-3.5 px-4 text-right"><Skeleton className="h-4 w-28 ml-auto" /></td>
                     </tr>
@@ -308,9 +355,8 @@ export default function SuppliersPage() {
                       <React.Fragment key={item.id}>
                         {/* Parent Row: Supplier */}
                         <tr
-                          className={`hover:bg-cyan-50/40 transition-colors cursor-pointer ${
-                            isExpanded ? 'bg-cyan-50/30' : ''
-                          }`}
+                          className={`hover:bg-cyan-50/40 transition-colors cursor-pointer ${isExpanded ? 'bg-cyan-50/30' : ''
+                            }`}
                           onClick={() => toggleExpand(item.id)}
                         >
                           <td className="py-3 px-4 text-center text-slate-400">
@@ -331,13 +377,12 @@ export default function SuppliersPage() {
                               <span className="font-bold text-slate-900">{item.name}</span>
                             </div>
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                                deptCount > 0
-                                  ? 'bg-cyan-50 text-cyan-800 border border-cyan-200'
-                                  : 'bg-slate-100 text-slate-500'
-                              }`}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${deptCount > 0
+                                ? 'bg-cyan-50 text-cyan-800 border border-cyan-200'
+                                : 'bg-slate-100 text-slate-500'
+                                }`}
                             >
                               <Users className="w-3 h-3 text-cyan-600" />
                               {deptCount > 0 ? `${deptCount} phòng ban` : 'Chưa có phòng ban'}
@@ -409,21 +454,42 @@ export default function SuppliersPage() {
                                     Đơn vị này chưa gán phòng ban trực thuộc nào. Bấm nút "+ Thêm Phòng Ban Mới" để tạo nhanh!
                                   </div>
                                 ) : (
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mt-2">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2">
                                     {item.departments.map((dept) => (
                                       <div
                                         key={dept.id}
-                                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-cyan-200 hover:shadow-2xs transition-all"
+                                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/90 bg-slate-50/60 hover:bg-white hover:border-cyan-300 hover:shadow-sm transition-all group"
                                       >
-                                        <div className="flex items-center gap-2 overflow-hidden">
+                                        <div className="flex items-center gap-2 overflow-hidden pr-2">
                                           <Users className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
-                                          <span className="font-medium text-slate-800 text-xs truncate">
+                                          <span className="font-semibold text-slate-800 text-xs truncate">
                                             {dept.name}
                                           </span>
                                         </div>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-emerald-50 text-emerald-700 border border-emerald-100 shrink-0">
-                                          ACTIVE
-                                        </span>
+
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            ACTIVE
+                                          </span>
+
+                                          {/* Nút Sửa & Xóa Khoa / Phòng Ban */}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleOpenEditDept(dept)}
+                                            className="p-1 text-slate-400 hover:text-cyan-700 hover:bg-cyan-50 rounded transition-colors cursor-pointer"
+                                            title="Sửa tên phòng ban / khoa"
+                                          >
+                                            <Edit3 className="w-3.5 h-3.5" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setDeletingDept(dept)}
+                                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                                            title="Xóa phòng ban / khoa"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
@@ -547,7 +613,43 @@ export default function SuppliersPage() {
         </form>
       </Modal>
 
-      {/* Modal Confirm Delete */}
+      {/* Modal Edit Department */}
+      <Modal
+        isOpen={!!editingDept}
+        onClose={() => setEditingDept(null)}
+        title="Chỉnh Sửa Phòng Ban / Khoa"
+        subtitle={editingDept ? `ID: #${editingDept.id}` : ''}
+      >
+        <form onSubmit={handleEditDeptSubmit} className="space-y-4">
+          <Input
+            label="Tên Phòng Ban / Khoa"
+            required
+            placeholder="Ví dụ: Khoa Cấp Cứu"
+            value={editDeptName}
+            onChange={(e) => setEditDeptName(e.target.value)}
+          />
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditingDept(null)}
+              disabled={isSubmittingEditDept}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isSubmittingEditDept}
+            >
+              Lưu Thay Đổi
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Confirm Delete Supplier */}
       <ConfirmModal
         isOpen={!!deletingSupplier}
         onClose={() => setDeletingSupplier(null)}
@@ -556,6 +658,23 @@ export default function SuppliersPage() {
         message={`Bạn có chắc chắn muốn xóa đơn vị "${deletingSupplier?.name}"? Hệ thống sẽ tự động kiểm tra: nếu đã từng phát sinh phiếu nhập sẽ được chuyển sang xóa mềm (ngưng hoạt động), nếu chưa dùng sẽ được xóa hoàn toàn.`}
         confirmText="Xác Nhận Xóa"
         isLoading={isDeleting}
+      />
+
+      {/* Modal Confirm Delete Department */}
+      <ConfirmModal
+        isOpen={!!deletingDept}
+        onClose={() => setDeletingDept(null)}
+        onConfirm={handleDeleteDeptConfirm}
+        title="Xác Nhận Xóa Phòng Ban / Khoa"
+        message={`Bạn có chắc chắn muốn xóa phòng ban "${deletingDept?.name}"? Hệ thống sẽ tự động kiểm tra: nếu đã từng phát sinh phiếu nhập sẽ được chuyển sang xóa mềm (ngưng hoạt động), nếu chưa dùng sẽ được xóa hoàn toàn.`}
+        confirmText="Xác Nhận Xóa"
+        isLoading={isDeletingDept}
+      />
+
+      <LoadingOverlay
+        isOpen={isSubmitting || isDeleting || isSubmittingDept || isSubmittingEditDept || isDeletingDept}
+        title="Đang cập nhật danh mục..."
+        message="Hệ thống đang xử lý dữ liệu Đơn vị và Phòng ban, vui lòng chờ trong giây lát."
       />
     </>
   );

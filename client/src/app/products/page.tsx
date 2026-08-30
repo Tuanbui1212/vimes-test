@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination } from '@/components';
+import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination, LoadingOverlay } from '@/components';
 import { useDebounce } from '@/hooks';
 import { productService } from '@/services';
 import type { Product } from '@/types';
@@ -558,6 +558,12 @@ export default function ProductsPage() {
         message={`Bạn có chắc chắn muốn xóa mặt hàng "${deletingProduct?.name}" (${deletingProduct?.code})? Hệ thống sẽ tự động kiểm tra: nếu đã từng phát sinh trong phiếu nhập kho sẽ được chuyển sang xóa mềm (ngưng sử dụng), nếu chưa dùng sẽ được xóa hoàn toàn.`}
         confirmText="Xác Nhận Xóa"
         isLoading={isDeleting}
+      />
+
+      <LoadingOverlay
+        isOpen={isSubmitting || isDeleting}
+        title="Đang lưu danh mục vật tư..."
+        message="Hệ thống đang cập nhật danh mục dược phẩm và vật tư y tế, vui lòng chờ trong giây lát."
       />
     </>
   );

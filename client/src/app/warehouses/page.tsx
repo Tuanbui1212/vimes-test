@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination } from '@/components';
+import { Button, Skeleton, Modal, ConfirmModal, Input, Pagination, LoadingOverlay } from '@/components';
 import { useDebounce } from '@/hooks';
 import { warehouseService } from '@/services';
 import type { Warehouse } from '@/types';
@@ -427,6 +427,12 @@ export default function WarehousesPage() {
         message={`Bạn có chắc chắn muốn xóa kho "${deletingWarehouse?.name}" (${deletingWarehouse?.code})? Hệ thống sẽ tự động kiểm tra: nếu đã từng phát sinh phiếu nhập sẽ được chuyển sang xóa mềm (ngưng hoạt động), nếu chưa dùng sẽ được xóa hoàn toàn.`}
         confirmText="Xác Nhận Xóa"
         isLoading={isDeleting}
+      />
+
+      <LoadingOverlay
+        isOpen={isSubmitting || isDeleting}
+        title="Đang lưu danh mục kho bãi..."
+        message="Hệ thống đang xử lý cập nhật kho bãi, vui lòng chờ trong giây lát."
       />
     </>
   );

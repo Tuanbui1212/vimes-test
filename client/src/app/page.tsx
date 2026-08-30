@@ -10,7 +10,8 @@ import {
   QuickCreateSupplierModal,
   QuickCreateDepartmentModal,
   QuickCreateWarehouseModal,
-  QuickCreateProductModal
+  QuickCreateProductModal,
+  LoadingOverlay
 } from '@/components';
 import {
   supplierService,
@@ -46,7 +47,8 @@ import {
   MapPin,
   Lock,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 import { toast } from 'sonner';
@@ -267,6 +269,17 @@ export default function CreateReceiptPage() {
     try {
       const res = await productService.getById(Number(productId));
       const targetProd = res.data;
+
+      // Kiểm tra trùng lặp với dòng khác
+      const duplicateRowIndex = items.findIndex(
+        (it, i) => i !== index && Number(it.product_id) === Number(productId)
+      );
+
+      if (duplicateRowIndex !== -1) {
+        const prodName = targetProd ? `${targetProd.code} - ${targetProd.name}` : (opt?.label || `ID: ${productId}`);
+        toast.error(`Mặt hàng "${prodName}" đã được chọn ở Dòng ${duplicateRowIndex + 1}!`);
+      }
+
       setItems((prev) =>
         prev.map((item, i) =>
           i === index
@@ -397,14 +410,74 @@ export default function CreateReceiptPage() {
   // ==================== SUBMIT FORM ====================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!receiptDate) {
+      showNotification('error', 'Vui lòng chọn Ngày lập phiếu');
+      return;
+    }
+
+    if (!supplierId) {
+      showNotification('error', 'Vui lòng chọn Đơn vị');
+      return;
+    }
+
+    if (!departmentId) {
+      showNotification('error', 'Vui lòng chọn Phòng ban trực thuộc');
+      return;
+    }
 
     if (!warehouseId) {
       showNotification('error', 'Vui lòng chọn Kho nhập hàng');
       return;
     }
 
+    if (!delivererName.trim()) {
+      showNotification('error', 'Vui lòng nhập Họ tên người giao hàng');
+      return;
+    }
+
+    if (!debitAccount.trim()) {
+      showNotification('error', 'Vui lòng nhập Tài khoản Nợ');
+      return;
+    }
+
+    if (!creditAccount.trim()) {
+      showNotification('error', 'Vui lòng nhập Tài khoản Có');
+      return;
+    }
+
+    if (!refDocType.trim()) {
+      showNotification('error', 'Vui lòng nhập chứng từ gốc (Theo)');
+      return;
+    }
+
+    if (!refDocNo.trim()) {
+      showNotification('error', 'Vui lòng nhập Số chứng từ gốc');
+      return;
+    }
+
+    if (!refDocDate) {
+      showNotification('error', 'Vui lòng chọn Ngày chứng từ gốc');
+      return;
+    }
+
+    if (!attachedDocs.trim()) {
+      showNotification('error', 'Vui lòng nhập Số chứng từ gốc kèm theo');
+      return;
+    }
+
     if (items.some((item) => !item.product_id)) {
       showNotification('error', 'Vui lòng chọn đầy đủ Vật tư / Hàng hóa cho tất cả các dòng');
+      return;
+    }
+
+    // Kiểm tra có dòng nào bị trùng mặt hàng không
+    const hasDuplicates = items.some(
+      (item, idx) => item.product_id && items.some((it, i) => i !== idx && Number(it.product_id) === Number(item.product_id))
+    );
+    if (hasDuplicates) {
+      showNotification('error', 'Có mặt hàng bị trùng lặp giữa các dòng. Vui lòng kiểm tra và xử lý dòng báo đỏ trước khi lưu!');
       return;
     }
 
@@ -710,10 +783,18 @@ export default function CreateReceiptPage() {
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {items.map((item, index) => {
                     const prod = item.selectedProduct;
+                    const duplicateRowIndex = item.product_id
+                      ? items.findIndex((it, i) => i !== index && Number(it.product_id) === Number(item.product_id))
+                      : -1;
+                    const isDuplicate = duplicateRowIndex !== -1;
+                    const rowError = isDuplicate ? `⚠️ Bị trùng mặt hàng với Dòng ${duplicateRowIndex + 1}` : undefined;
+
                     return (
                       <tr
                         key={item.id}
-                        className="hover:bg-slate-50/80 transition-colors relative"
+                        className={`transition-colors relative ${
+                          isDuplicate ? 'bg-rose-50/50 hover:bg-rose-50/70' : 'hover:bg-slate-50/80'
+                        }`}
                         style={{ zIndex: items.length - index }}
                       >
                         <td className="py-3 px-3 text-center text-xs font-semibold text-slate-400">
@@ -733,6 +814,7 @@ export default function CreateReceiptPage() {
                             }
                             createButtonLabel="Thêm mới Vật tư / Dược phẩm"
                             className="w-full"
+                            error={rowError}
                             allowClear
                           />
                           {prod && (
@@ -792,7 +874,7 @@ export default function CreateReceiptPage() {
                           <input
                             type="number"
                             min="0"
-                            step="1000"
+                            step="any"
                             placeholder="0"
                             className="w-full text-right bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm focus:border-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-600/20"
                             value={item.price}
@@ -883,6 +965,12 @@ export default function CreateReceiptPage() {
         initialName={quickProduct.initialName}
         onClose={() => setQuickProduct({ open: false, rowIndex: 0, initialName: '' })}
         onSuccess={handleProductCreated}
+      />
+
+      <LoadingOverlay
+        isOpen={isSubmitting}
+        title="Đang lưu phiếu nhập kho..."
+        message="Hệ thống đang kiểm tra danh mục và hạch toán dữ liệu kho y tế, vui lòng chờ trong giây lát."
       />
     </>
   );
