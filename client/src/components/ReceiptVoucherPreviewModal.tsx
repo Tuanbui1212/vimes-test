@@ -78,7 +78,9 @@ export function ReceiptVoucherPreviewModal({
           <div className="flex justify-between items-start gap-4 mb-4">
             <div className="space-y-1">
               <p className="font-semibold text-slate-800 font-sans text-xs">
-                Đơn vị: <span className="font-normal">Bệnh viện / Cơ sở Y tế</span>
+                Đơn vị: <span className="font-normal">
+                  {receipt.supplier_name || '........................................................................................................................'}
+                </span>
               </p>
               <p className="font-semibold text-slate-800 font-sans text-xs">
                 Bộ phận:{' '}
@@ -143,10 +145,6 @@ export function ReceiptVoucherPreviewModal({
               <span>ngày</span>
               <span className="font-semibold text-slate-950">
                 {formatDocDate(receipt.ref_document_date) || '... / ... / ......'}
-              </span>
-              <span>của</span>
-              <span className="font-semibold text-slate-950">
-                {receipt.supplier_name || '........................................................................................................................'}
               </span>
             </div>
 
