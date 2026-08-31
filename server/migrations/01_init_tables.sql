@@ -49,6 +49,11 @@ CREATE TABLE IF NOT EXISTS receipt_vouchers (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS receipt_voucher_counters (
+    year INTEGER PRIMARY KEY,
+    last_number INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS receipt_voucher_details (
     id SERIAL PRIMARY KEY,
     voucher_id INTEGER NOT NULL REFERENCES receipt_vouchers(id) ON DELETE CASCADE,
@@ -91,3 +96,13 @@ INSERT INTO products (code, name, brand, specifications, quality, category_type,
 ('VT005', 'Khẩu trang y tế', 'Nhãn hiệu A', '4 lớp', 'Kháng khuẩn', 'Dụng cụ bảo hộ', 'Hộp'),
 ('VT006', 'Nước muối sinh lý', 'Nhãn hiệu C', 'Chai 500ml', 'Đạt chuẩn', 'Dược phẩm', 'Chai')
 ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO receipt_voucher_counters (year, last_number)
+SELECT 
+    CAST(SUBSTRING(voucher_code FROM '^PNK-([0-9]{4})-[0-9]+$') AS INTEGER) AS year,
+    MAX(CAST(SUBSTRING(voucher_code FROM '^PNK-[0-9]{4}-([0-9]+)$') AS INTEGER)) AS last_number
+FROM receipt_vouchers
+WHERE voucher_code ~ '^PNK-[0-9]{4}-[0-9]+$'
+GROUP BY SUBSTRING(voucher_code FROM '^PNK-([0-9]{4})-[0-9]+$')
+ON CONFLICT (year) 
+DO UPDATE SET last_number = GREATEST(receipt_voucher_counters.last_number, EXCLUDED.last_number);

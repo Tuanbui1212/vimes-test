@@ -40,10 +40,9 @@ export class ReceiptService {
     };
   }
 
-  async autoGenerateReceiptCode(): Promise<string> {
+  async autoGenerateReceiptCode(client?: any): Promise<string> {
     const currentYear = new Date().getFullYear();
-    const maxNumber = await this.receiptRepository.getMaxReceiptCodeByYear(currentYear);
-    const nextNumber = maxNumber + 1;
+    const nextNumber = await this.receiptRepository.getNextReceiptVoucherNumber(currentYear, client);
     return `PNK-${currentYear}-${String(nextNumber).padStart(4, '0')}`;
   }
 
@@ -104,13 +103,14 @@ export class ReceiptService {
       return sum + itemTotal;
     }, 0);
 
-    if (!payload.voucher_code || !payload.voucher_code.trim()) {
-      payload.voucher_code = await this.autoGenerateReceiptCode();
-    }
-
     const client = await pool.connect();
+    const voucher_code = await this.autoGenerateReceiptCode(client);
     try {
       await client.query('BEGIN');
+
+      if (!payload.voucher_code || !payload.voucher_code.trim()) {
+        payload.voucher_code = voucher_code;
+      }
 
       const voucherId = await this.receiptRepository.insertVoucher(client, payload, calculatedTotal);
       await this.receiptRepository.insertVoucherDetails(client, voucherId, payload.items);

@@ -54,6 +54,19 @@ export class ReceiptRepository {
     return result.rows[0] || null;
   }
 
+  async getNextReceiptVoucherNumber(year: number, client?: PoolClient): Promise<number> {
+    const executor = client || pool;
+    const query = `
+      INSERT INTO receipt_voucher_counters (year, last_number)
+      VALUES ($1, 1)
+      ON CONFLICT (year)
+      DO UPDATE SET last_number = receipt_voucher_counters.last_number + 1
+      RETURNING last_number;
+    `;
+    const result = await executor.query(query, [year]);
+    return parseInt(result.rows[0].last_number, 10);
+  }
+
   async getMaxReceiptCodeByYear(year: number): Promise<number> {
     const query = `
     SELECT COALESCE(

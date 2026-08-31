@@ -70,12 +70,12 @@ describe('Unit Test: ReceiptService', () => {
   });
 
   describe('autoGenerateReceiptCode', () => {
-    // Kiểm tra tạo mã phiếu tự động theo định dạng PNK-NĂM-STT
+    // Kiểm tra tạo mã phiếu tự động tăng từ bảng counter và format tại service
     it('phải tạo mã phiếu tự động tăng đúng định dạng', async () => {
-      jest.spyOn(ReceiptRepository.prototype, 'getMaxReceiptCodeByYear').mockResolvedValueOnce(5);
+      const currentYear = new Date().getFullYear();
+      jest.spyOn(ReceiptRepository.prototype, 'getNextReceiptVoucherNumber').mockResolvedValueOnce(6);
 
       const code = await receiptService.autoGenerateReceiptCode();
-      const currentYear = new Date().getFullYear();
       expect(code).toBe(`PNK-${currentYear}-0006`);
     });
   });
