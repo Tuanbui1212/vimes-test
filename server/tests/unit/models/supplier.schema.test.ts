@@ -4,7 +4,7 @@ import { SupplierSchema } from '../../../src/models/supplier.js';
 describe('Unit Test: SupplierSchema (Zod Validation)', () => {
   const validSupplier = {
     id: 1,
-    name: 'Công ty Cổ phần Dược phẩm VIMES',
+    name: 'Công ty Cổ phần Dược phẩm TEST-VIMES',
     status: 'ACTIVE',
   };
 

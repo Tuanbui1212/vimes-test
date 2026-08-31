@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Printer } from 'lucide-react';
 import type { ReceiptVoucher } from '@/types';
 import { formatCurrency, numberToWords } from '@/utils/format';
 import { Button } from './Button';
@@ -45,6 +45,80 @@ export function ReceiptVoucherPreviewModal({
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
   };
 
+  const handlePrint = () => {
+    const content = document.getElementById('printable-voucher-paper');
+    if (!content) return;
+
+    // Tạo một iframe ẩn để in biệt lập, đảm bảo không dính Sidebar/Header và không bị trắng trang
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    // Lấy toàn bộ styles từ trang hiện tại
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((el) => el.outerHTML)
+      .join('\n');
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html lang="vi">
+        <head>
+          <title>Phiếu Nhập Kho - ${receipt.voucher_code}</title>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          ${styles}
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 12mm 15mm;
+            }
+            body {
+              background: white !important;
+              color: #0f172a !important;
+              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            table {
+              width: 100% !important;
+              border-collapse: collapse !important;
+            }
+            th, td {
+              border-color: #cbd5e1 !important;
+            }
+          </style>
+        </head>
+        <body class="bg-white text-slate-900">
+          <div class="p-2 bg-white">
+            ${content.innerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    iframe.contentWindow?.focus();
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 1000);
+    }, 250);
+  };
+
   return (
     <div
       onClick={onClose}
@@ -62,18 +136,31 @@ export function ReceiptVoucherPreviewModal({
               Xem Chi Tiết Phiếu Nhập Kho (Mẫu số 01 - VT)
             </h3>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
-            title="Đóng modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handlePrint}
+              leftIcon={<Printer className="w-4 h-4" />}
+            >
+              In / Xuất PDF
+            </Button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+              title="Đóng modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Modal Body - Paper Styled Form */}
-        <div className="p-6 sm:p-8 overflow-y-auto font-sans text-slate-900 text-sm leading-relaxed bg-white select-text">
+        {/* Modal Body - Paper Styled Form (Only this area will be printed) */}
+        <div
+          id="printable-voucher-paper"
+          className="p-6 sm:p-8 overflow-y-auto font-sans text-slate-900 text-sm leading-relaxed bg-white select-text print:p-0"
+        >
           {/* Top Form Header */}
           <div className="flex justify-between items-start gap-4 mb-4">
             <div className="space-y-1">
@@ -332,11 +419,23 @@ export function ReceiptVoucherPreviewModal({
           </div>
         </div>
 
-        {/* Modal Footer Actions - ONLY Đóng Button */}
-        <div className="p-2 px-6 border-t border-slate-200 bg-slate-50 flex items-center justify-end rounded-b-2xl">
-          <Button variant="secondary" onClick={onClose}>
-            Đóng
-          </Button>
+        {/* Modal Footer Actions - Hidden when printing */}
+        <div className="p-3 px-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between rounded-b-2xl print:hidden">
+          <p className="text-xs text-slate-500 italic">
+            * Mẹo: Chọn <span className="font-semibold text-slate-700">"Save as PDF"</span> trong hộp thoại in để lưu file PDF.
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={onClose}>
+              Đóng
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handlePrint}
+              leftIcon={<Printer className="w-4 h-4" />}
+            >
+              In / Xuất PDF
+            </Button>
+          </div>
         </div>
       </div>
     </div>

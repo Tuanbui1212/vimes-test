@@ -97,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <div className="overflow-hidden">
               <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-tight text-white">VIMES</span>
+                <span className="text-xl font-black tracking-tight text-white">TEST-VIMES</span>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
                   HIS
                 </span>
@@ -170,7 +170,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <div className="overflow-hidden text-[11px]">
               <div className="text-slate-300 font-medium truncate">Máy chủ: Sẵn sàng</div>
-              <div className="text-slate-500 text-[10px]">VIMES v2.5</div>
+              <div className="text-slate-500 text-[10px]">TEST-VIMES v2.5</div>
             </div>
           )}
         </div>

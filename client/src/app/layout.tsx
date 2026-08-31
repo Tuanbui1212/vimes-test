@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VIMES - Hệ Thống Quản Lý Kho Dược & Vật Tư Y Tế",
-  description: "Hệ thống quản lý kho tổng thể và nhập xuất vật tư y tế VIMES",
+  title: "TEST-VIMES - Hệ Thống Quản Lý Kho Dược & Vật Tư Y Tế",
+  description: "Hệ thống quản lý kho tổng thể và nhập xuất vật tư y tế TEST-VIMES",
 };
 
 export default function RootLayout({

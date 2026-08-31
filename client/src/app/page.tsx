@@ -540,7 +540,7 @@ export default function CreateReceiptPage() {
             </span>
             Lập Phiếu Nhập Kho Vật Tư & Dược Phẩm (Mẫu 01-VT)
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">Hệ thống quản lý vật tư y tế VIMES</p>
+          <p className="text-xs text-slate-500 mt-0.5">Hệ thống quản lý vật tư y tế TEST-VIMES</p>
         </div>
 
         <div className="flex items-center gap-3">

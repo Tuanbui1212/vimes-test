@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: vimes_postgres
+    container_name: test_vimes_postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -20,7 +20,7 @@ services:
 
   server:
     build: .
-    container_name: vimes_backend
+    container_name: test_vimes_backend
     restart: always
     ports:
       - "8080:8080"

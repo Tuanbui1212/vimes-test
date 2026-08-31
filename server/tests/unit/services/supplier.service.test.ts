@@ -8,7 +8,7 @@ describe('Unit Test: SupplierService', () => {
 
   const sampleSupplier: Supplier = {
     id: 1,
-    name: 'Công ty Cổ phần Dược phẩm VIMES',
+    name: 'Công ty Cổ phần Dược phẩm TEST-VIMES',
     status: 'ACTIVE',
   };
 
@@ -22,9 +22,9 @@ describe('Unit Test: SupplierService', () => {
     it('phải tạo thành công và trả về nhà cung cấp mới', async () => {
       const spyCreate = jest.spyOn(SupplierRepository.prototype, 'createSupplier').mockResolvedValueOnce(sampleSupplier);
 
-      const result = await supplierService.createSupplier({ name: 'Công ty Cổ phần Dược phẩm VIMES' });
+      const result = await supplierService.createSupplier({ name: 'Công ty Cổ phần Dược phẩm TEST-VIMES' });
       expect(result).toEqual(sampleSupplier);
-      expect(spyCreate).toHaveBeenCalledWith({ name: 'Công ty Cổ phần Dược phẩm VIMES' });
+      expect(spyCreate).toHaveBeenCalledWith({ name: 'Công ty Cổ phần Dược phẩm TEST-VIMES' });
     });
   });
 
@@ -103,11 +103,11 @@ describe('Unit Test: SupplierService', () => {
 
     // Kiểm tra cập nhật tên nhà cung cấp thành công
     it('phải cập nhật thành công khi nhà cung cấp tồn tại', async () => {
-      const updated = { ...sampleSupplier, name: 'VIMES Pharma' };
+      const updated = { ...sampleSupplier, name: 'TEST-VIMES Pharma' };
       jest.spyOn(SupplierRepository.prototype, 'getSupplierById').mockResolvedValueOnce(sampleSupplier);
       jest.spyOn(SupplierRepository.prototype, 'updateSupplier').mockResolvedValueOnce(updated);
 
-      const result = await supplierService.updateSupplier(1, { name: 'VIMES Pharma' });
+      const result = await supplierService.updateSupplier(1, { name: 'TEST-VIMES Pharma' });
       expect(result).toEqual(updated);
     });
   });
