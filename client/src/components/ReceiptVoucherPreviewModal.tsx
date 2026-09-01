@@ -282,17 +282,6 @@ export function ReceiptVoucherPreviewModal({
                   <th className="border border-slate-900 p-1.5 w-18">Theo CT</th>
                   <th className="border border-slate-900 p-1.5 w-18">Thực nhập</th>
                 </tr>
-                {/* Column identifiers row (A, B, C, D, 1, 2, 3, 4) */}
-                <tr className="bg-slate-100 text-slate-700 text-center italic text-[11px] font-sans">
-                  <td className="border border-slate-900 py-0.5">A</td>
-                  <td className="border border-slate-900 py-0.5">B</td>
-                  <td className="border border-slate-900 py-0.5">C</td>
-                  <td className="border border-slate-900 py-0.5">D</td>
-                  <td className="border border-slate-900 py-0.5">1</td>
-                  <td className="border border-slate-900 py-0.5">2</td>
-                  <td className="border border-slate-900 py-0.5">3</td>
-                  <td className="border border-slate-900 py-0.5">4</td>
-                </tr>
               </thead>
               <tbody>
                 {receipt.items && receipt.items.length > 0 ? (
