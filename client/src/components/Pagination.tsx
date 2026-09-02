@@ -97,11 +97,10 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(1)}
           disabled={currentPage <= 1}
           title="Trang đầu tiên"
-          className={`p-1.5 rounded-lg border transition-colors ${
-            currentPage <= 1
+          className={`p-1.5 rounded-lg border transition-colors ${currentPage <= 1
               ? 'text-slate-300 border-slate-100 cursor-not-allowed bg-slate-50'
               : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-cyan-700 cursor-pointer bg-white'
-          }`}
+            }`}
         >
           <ChevronsLeft className="w-4 h-4" />
         </button>
@@ -112,11 +111,10 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
           title="Trang trước"
-          className={`p-1.5 rounded-lg border transition-colors ${
-            currentPage <= 1
+          className={`p-1.5 rounded-lg border transition-colors ${currentPage <= 1
               ? 'text-slate-300 border-slate-100 cursor-not-allowed bg-slate-50'
               : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-cyan-700 cursor-pointer bg-white'
-          }`}
+            }`}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -138,11 +136,10 @@ export const Pagination: React.FC<PaginationProps> = ({
                 key={`page-${p}`}
                 type="button"
                 onClick={() => onPageChange(Number(p))}
-                className={`min-w-[30px] h-[30px] px-2 rounded-lg text-xs font-semibold transition-colors ${
-                  isCurrent
+                className={`min-w-[30px] h-[30px] px-2 rounded-lg text-xs font-semibold transition-colors ${isCurrent
                     ? 'bg-cyan-600 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 bg-white'
-                }`}
+                  }`}
               >
                 {p}
               </button>
@@ -161,11 +158,10 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= safeTotalPages}
           title="Trang tiếp theo"
-          className={`p-1.5 rounded-lg border transition-colors ${
-            currentPage >= safeTotalPages
+          className={`p-1.5 rounded-lg border transition-colors ${currentPage >= safeTotalPages
               ? 'text-slate-300 border-slate-100 cursor-not-allowed bg-slate-50'
               : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-cyan-700 cursor-pointer bg-white'
-          }`}
+            }`}
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -176,11 +172,10 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(safeTotalPages)}
           disabled={currentPage >= safeTotalPages}
           title="Trang cuối cùng"
-          className={`p-1.5 rounded-lg border transition-colors ${
-            currentPage >= safeTotalPages
+          className={`p-1.5 rounded-lg border transition-colors ${currentPage >= safeTotalPages
               ? 'text-slate-300 border-slate-100 cursor-not-allowed bg-slate-50'
               : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-cyan-700 cursor-pointer bg-white'
-          }`}
+            }`}
         >
           <ChevronsRight className="w-4 h-4" />
         </button>

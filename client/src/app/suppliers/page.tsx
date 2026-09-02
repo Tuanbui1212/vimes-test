@@ -31,7 +31,7 @@ export default function SuppliersPage() {
 
   // Pagination state (default 15 rows)
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState(12);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
